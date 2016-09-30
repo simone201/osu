@@ -12,7 +12,21 @@ namespace osu.Game.Graphics.Cursor
 {
     class OsuCursorContainer : CursorContainer
     {
+        private CursorTrail trail;
         protected override Drawable CreateCursor() => new OsuCursor();
+
+        public override void Load()
+        {
+            base.Load();
+
+            //Add(trail = new CursorTrail());
+        }
+
+        protected override bool OnMouseMove(InputState state)
+        {
+            trail?.Add(state.Mouse.Position);
+            return base.OnMouseMove(state);
+        }
 
         protected override bool OnMouseDown(InputState state, MouseDownEventArgs args)
         {
