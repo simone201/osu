@@ -7,6 +7,7 @@ using OpenTK.Graphics;
 using osu.Game.Beatmaps.Objects;
 using osu.Game.Beatmaps.Samples;
 using osu.Game.Beatmaps.Timing;
+using osu.Game.Database;
 using osu.Game.GameModes.Play;
 using osu.Game.Users;
 using SQLite;
@@ -20,7 +21,7 @@ namespace osu.Game.Beatmaps
         [NotNull, Indexed]
         public int BeatmapSetID { get; set; }
         [Indexed]
-        public int BeatmapMetadataID { get; set; }
+        public int? BeatmapMetadataID { get; set; }
         public int BaseDifficultyID { get; set; }
         [Ignore]
         public List<HitObject> HitObjects { get; set; }

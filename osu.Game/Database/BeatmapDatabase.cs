@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
+using System.Linq;
 using osu.Framework.Platform;
 using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.Formats;
@@ -12,22 +14,24 @@ namespace osu.Game.Database
 {
     public class BeatmapDatabase
     {
-        private static SQLiteConnection connection { get; set; }
+        private static SQLiteConnection db;
         private BasicStorage storage;
+        private static BeatmapSet[] beatmapSetCache;
         
         public BeatmapDatabase(BasicStorage storage)
         {
             this.storage = storage;
-            if (connection == null)
+            if (db == null)
             {
-                connection = storage.GetDatabase(@"beatmaps");
-                connection.CreateTable<BeatmapMetadata>();
-                connection.CreateTable<BaseDifficulty>();
-                connection.CreateTable<BeatmapSet>();
-                connection.CreateTable<Beatmap>();
+                db = storage.GetDatabase(@"beatmaps");
+                db.CreateTable<BeatmapMetadata>();
+                db.CreateTable<BaseDifficulty>();
+                db.CreateTable<BeatmapSet>();
+                db.CreateTable<Beatmap>();
             }
         }
-        public void AddBeatmap(string path)
+
+        public void AddBeatmap(string path)
         {
             string hash = null;
             ArchiveReader reader;
@@ -47,7 +51,7 @@ namespace osu.Game.Database
             else
                 reader = ArchiveReader.GetReader(storage, path);
             var metadata = reader.ReadMetadata();
-            if (connection.Table<BeatmapSet>().Count(b => b.BeatmapSetID == metadata.BeatmapSetID) != 0)
+            if (db.Table<BeatmapSet>().Where(b => b.BeatmapSetID == metadata.BeatmapSetID).Any())
                 return; // TODO: Update this beatmap instead
             string[] mapNames = reader.ReadBeatmaps();
             var beatmapSet = new BeatmapSet
@@ -65,21 +69,23 @@ namespace osu.Game.Database
                     Beatmap beatmap = new Beatmap();
                     decoder.Decode(stream, beatmap);
                     maps.Add(beatmap);
-                    beatmap.BaseDifficultyID = connection.Insert(beatmap.BaseDifficulty);
+                    beatmap.BaseDifficultyID = db.Insert(beatmap.BaseDifficulty);
                 }
             }
-            beatmapSet.BeatmapMetadataID = connection.Insert(metadata);
-            connection.Insert(beatmapSet);
-            connection.InsertAll(maps);
+            beatmapSet.BeatmapMetadataID = db.Insert(metadata);
+            db.Insert(beatmapSet);
+            db.InsertAll(maps);
         }
-        public ArchiveReader GetReader(BeatmapSet beatmapSet)
+
+        public ArchiveReader GetReader(BeatmapSet beatmapSet)
         {
             return ArchiveReader.GetReader(storage, beatmapSet.Path);
         }
 
         /// <summary>
         /// Given a BeatmapSet pulled from the database, loads the rest of its data from disk.
-        /// </summary>        public void PopulateBeatmap(BeatmapSet beatmapSet)
+        /// </summary>
+        public void PopulateBeatmap(BeatmapSet beatmapSet)
         {
             using (var reader = GetReader(beatmapSet))
             {
@@ -95,6 +101,31 @@ namespace osu.Game.Database
                     }
                 }
             }
+        }
+
+        public BeatmapSet[] GetBeatmapSets()
+        {
+            if (beatmapSetCache != null)
+                return beatmapSetCache;
+            beatmapSetCache = db.Table<BeatmapSet>().ToArray();
+            foreach (var bset in beatmapSetCache)
+            {
+                bset.Metadata = db.Table<BeatmapMetadata>()
+                    .Where(m => m.ID == bset.BeatmapMetadataID).SingleOrDefault();
+                bset.Beatmaps = db.Table<Beatmap>()
+                    .Where(b => b.BeatmapSetID == bset.BeatmapSetID).ToList();
+                foreach (var map in bset.Beatmaps)
+                {
+                    if (map.BeatmapMetadataID != null)
+                    {
+                        map.Metadata = db.Table<BeatmapMetadata>()
+                            .Where(m => m.ID == map.BeatmapMetadataID.Value).SingleOrDefault();
+                    }
+                    map.BaseDifficulty = db.Table<BaseDifficulty>()
+                        .Where(d => d.ID == map.BaseDifficultyID).SingleOrDefault();
+                }
+            }
+            return beatmapSetCache;
         }
     }
 }
