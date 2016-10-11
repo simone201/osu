@@ -17,6 +17,7 @@ namespace osu.Game.Database
         private static SQLiteConnection db;
         private BasicStorage storage;
         private static BeatmapSet[] beatmapSetCache;
+        public event Action<BeatmapSet> BeatmapSetAdded;
         
         public BeatmapDatabase(BasicStorage storage)
         {
@@ -66,15 +67,20 @@ namespace osu.Game.Database
                 using (var stream = new StreamReader(reader.ReadFile(name)))
                 {
                     var decoder = BeatmapDecoder.GetDecoder(stream);
-                    Beatmap beatmap = new Beatmap();
+                    Beatmap beatmap;
                     decoder.Decode(stream, beatmap);
-                    maps.Add(beatmap);
-                    beatmap.BaseDifficultyID = db.Insert(beatmap.BaseDifficulty);
+                    beatmapSet.Beatmaps.Add(beatmap);
+                    db.Insert(beatmap.BaseDifficulty);
+                    beatmap.BaseDifficultyID = beatmap.BaseDifficulty.ID;
                 }
             }
-            beatmapSet.BeatmapMetadataID = db.Insert(metadata);
+            db.Insert(metadata);
+            beatmapSet.BeatmapMetadataID = metadata.ID;
             db.Insert(beatmapSet);
-            db.InsertAll(maps);
+            db.InsertAll(beatmapSet.Beatmaps);
+            beatmapSetCache = (beatmapSetCache ?? new BeatmapSet[0])
+                .Concat(new[] { beatmapSet }).ToArray();
+            BeatmapSetAdded?.Invoke(beatmapSet);
         }
 
         public ArchiveReader GetReader(BeatmapSet beatmapSet)
