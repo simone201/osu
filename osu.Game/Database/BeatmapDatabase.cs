@@ -74,6 +74,7 @@ namespace osu.Game.Database
                 }
             }
             db.Insert(metadata);
+            beatmapSet.Metadata = metadata;
             beatmapSet.BeatmapMetadataID = metadata.ID;
             db.Insert(beatmapSet);
             db.InsertAll(beatmapSet.Beatmaps);

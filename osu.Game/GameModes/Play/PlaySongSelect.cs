@@ -70,7 +70,7 @@ namespace osu.Game.GameModes.Play
 
             addBeatmapSets();
 
-            beatmaps.BeatmapSetAdded += bset => setList.Add(createSetUI(bset));
+            beatmaps.BeatmapSetAdded += bset => Scheduler.Add(() => setList.Add(createSetUI(bset)));
         }
 
         protected override void Dispose(bool isDisposing)
