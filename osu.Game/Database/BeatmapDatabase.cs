@@ -61,13 +61,12 @@ namespace osu.Game.Database
                 Path = path,
                 Hash = hash,
             };
-            var maps = new List<Beatmap>();
             foreach (var name in mapNames)
             {
                 using (var stream = new StreamReader(reader.ReadFile(name)))
                 {
                     var decoder = BeatmapDecoder.GetDecoder(stream);
-                    Beatmap beatmap;
+                    Beatmap beatmap = new Beatmap();
                     decoder.Decode(stream, beatmap);
                     beatmapSet.Beatmaps.Add(beatmap);
                     db.Insert(beatmap.BaseDifficulty);
