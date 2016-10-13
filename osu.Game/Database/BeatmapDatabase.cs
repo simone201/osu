@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using osu.Framework.Logging;
 using osu.Framework.Platform;
 using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.Formats;
@@ -23,7 +24,11 @@ namespace osu.Game.Database
                 connection.CreateTable<BeatmapSet>();
                 connection.CreateTable<Beatmap>();
             }
+
+            Logger.Log($@"Loaded beatmap database with {connection.Table<Beatmap>().Count()} maps.");
         }
+
+        public Beatmap FirstBeatmap => connection.Table<Beatmap>().First();
         public void AddBeatmap(ArchiveReader input)
         {
             var metadata = input.ReadMetadata();

@@ -36,6 +36,7 @@ namespace osu.Game.Beatmaps.Objects.Osu.Drawable
 
             Transforms.Add(new TransformAlpha(Clock) { StartTime = h.StartTime - 200, EndTime = h.StartTime, StartValue = 0, EndValue = 1 });
             Transforms.Add(new TransformAlpha(Clock) { StartTime = h.StartTime + h.Duration + 200, EndTime = h.StartTime + h.Duration + 400, StartValue = 1, EndValue = 0 });
+            Transforms.Add(new TransformScaleVector(Clock) { StartTime = h.StartTime + h.Duration, EndTime = h.StartTime + h.Duration + 400, StartValue = Scale, EndValue = Scale * 1.5f, Easing = EasingTypes.OutQuad });
             Expire(true);
         }
     }

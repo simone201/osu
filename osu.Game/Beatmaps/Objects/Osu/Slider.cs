@@ -8,7 +8,7 @@ namespace osu.Game.Beatmaps.Objects.Osu
 {
     public class Slider : OsuBaseHit
     {
-        public List<Vector2> Path;
+        public List<Vector2> Path = new List<Vector2>();
 
         public int RepeatCount;
     }

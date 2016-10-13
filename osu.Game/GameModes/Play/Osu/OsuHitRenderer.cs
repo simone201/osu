@@ -15,6 +15,14 @@ namespace osu.Game.GameModes.Play.Osu
 
         protected override List<OsuBaseHit> Convert(List<HitObject> objects) => new OsuConverter().Convert(objects);
 
-        protected override Drawable GetVisualRepresentation(OsuBaseHit h) => new DrawableCircle(h);
+        protected override Drawable GetVisualRepresentation(OsuBaseHit h)
+        {
+            Circle c = h as Circle;
+            if (c != null) return new DrawableCircle(c);
+            Slider s = h as Slider;
+            if (s != null) return new DrawableSlider(s);
+
+            return null;
+        }
     }
 }

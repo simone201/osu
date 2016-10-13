@@ -47,7 +47,11 @@ namespace osu.Game.GameModes.Play
         {
             if (objects == null) return;
             foreach (T h in objects)
-                playfield.Add(GetVisualRepresentation(h));
+            {
+                var rep = GetVisualRepresentation(h);
+                if (rep != null)
+                    playfield.Add(rep);
+            }
         }
 
         protected abstract Drawable GetVisualRepresentation(T h);

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,39 +22,60 @@ using osu.Game.Graphics.UserInterface;
 using OpenTK;
 using OpenTK.Input;
 using osu.Framework;
+using osu.Framework.Audio.Track;
+using osu.Game.Beatmaps.Formats;
+using osu.Game.Beatmaps.IO;
 
 namespace osu.Game.GameModes.Play
 {
-    class Player : GameModeWhiteBox
+    class Player : OsuGameMode
     {
         protected override BackgroundMode CreateBackground() => new BackgroundModeCustom(@"Backgrounds/bg4");
 
-        protected override IEnumerable<Type> PossibleChildren => new[] {
-                typeof(Results)
-        };
+        protected override IFrameBasedClock Clock => clock;
+
+        private FramedClock clock = new FramedClock();
 
         public override void Load(BaseGame game)
         {
             base.Load(game);
 
-            List<HitObject> objects = new List<HitObject>();
+            //i start with a beatmap
+            Beatmap beatmap = ((OsuGame)game).Beatmaps.FirstBeatmap;
 
-            double time = Time + 1000;
-            for (int i = 0; i < 100; i++)
+            //beatmap is missing storage access method (to get osz directly) and ability to access file streams
+
+            //...so i get it myself
+            var reader = ArchiveReader.GetReader(game.Host.Storage, @"150945 Knife Party - Centipede.osz");
+
+            //i have to read the filenames manually because they aren't in the databse either
+            string[] maps = reader.ReadBeatmaps();
+
+
+            AudioTrackBass track = new AudioTrackBass(reader.ReadFile(@"150945 Knife Party - Centipede/02-knife_party-centipede.mp3"));
+            game.Audio.Track.ActiveItems.ForEach(t => t.Stop());
+            game.Audio.Track.ActiveItems.Clear();
+            game.Audio.Track.AddItem(track);
+
+            track.Start();
+
+            using (Stream s = reader.ReadFile(maps[0]))
+            using (StreamReader sr = new StreamReader(s))
             {
-                objects.Add(new Circle()
-                {
-                    StartTime = time,
-                    Position = new Vector2(RNG.Next(0, 512), RNG.Next(0, 384))
-                });
+                var decoder = BeatmapDecoder.GetDecoder(sr);
 
-                time += RNG.Next(50, 500);
+                //i get a new beatmap even though i already had one earlier... decoding should populate hitobjects etc and set a flag on the beatmap object saying it's fully loaded (and allow unloading too)
+                //rather than return a new beatmap
+
+                //because the decoder consumed some of the streamreader, i need to reset the stream (hopefully the underlying stream allows this) and then start reading again, ew
+                //s.Seek(0, SeekOrigin.Begin);
+
+                //ok seeking doesn't work.
+
+                using (Stream s2 = reader.ReadFile(maps[0]))
+                using (StreamReader sr2 = new StreamReader(s2))
+                    beatmap = decoder.Decode(sr2);
             }
-
-            Beatmap beatmap = new Beatmap
-            {
-                HitObjects = objects
-            };
 
             OsuGame osu = game as OsuGame;
 
@@ -108,6 +130,12 @@ namespace osu.Game.GameModes.Play
                     new KeyCounterMouse(@"M2", MouseButton.Right),
                 }
             });
+        }
+
+        protected override void Update()
+        {
+            base.Update();
+            clock.ProcessFrame();
         }
     }
 }

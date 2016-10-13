@@ -74,6 +74,7 @@ namespace osu.Game
                 try
                 {
                     var reader = ArchiveReader.GetReader(Host.Storage, message.Path);
+
                     Beatmaps.AddBeatmap(reader);
                     // TODO: Switch to beatmap list and select the new song
                 }

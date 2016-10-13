@@ -2,6 +2,9 @@
 //Licensed under the MIT Licence - https://raw.githubusercontent.com/ppy/osu/master/LICENCE
 
 using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using OpenTK;
 using osu.Game.Beatmaps.Samples;
 
@@ -28,6 +31,7 @@ namespace osu.Game.Beatmaps.Objects.Osu
 
         public static OsuBaseHit Parse(string val)
         {
+            //480,228,13813,2,0,P|484:192|472:152,1,70,8|0,0:0|0:0,0:0:0:0:
             string[] split = val.Split(',');
             var type = (HitObjectType)int.Parse(split[3]);
             bool combo = type.HasFlag(HitObjectType.NewCombo);
@@ -40,7 +44,22 @@ namespace osu.Game.Beatmaps.Objects.Osu
                     result = new Circle();
                     break;
                 case HitObjectType.Slider:
-                    result = new Slider();
+
+                    List<Vector2> path = new List<Vector2>();
+                    var s1 = split[5].Split('|');
+
+                    foreach (var s2 in s1.Skip(1))
+                    {
+                        var s3 = s2.Split(':');
+                        path.Add(new Vector2(float.Parse(s3[0], NumberFormatInfo.InvariantInfo), float.Parse(s3[1], NumberFormatInfo.InvariantInfo)));
+                    }
+
+
+                    result = new Slider()
+                    {
+                        Path = path
+                    };
+
                     break;
                 case HitObjectType.Spinner:
                     result = new Spinner();
