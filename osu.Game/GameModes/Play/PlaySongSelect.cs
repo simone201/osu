@@ -127,7 +127,7 @@ namespace osu.Game.GameModes.Play
         {
             base.Dispose(isDisposing);
 
-            playMode.ValueChanged -= PlayMode_ValueChanged;
+            if (playMode != null) playMode.ValueChanged -= PlayMode_ValueChanged;
         }
 
         private void PlayMode_ValueChanged(object sender, EventArgs e)
