@@ -2,6 +2,7 @@
 //Licensed under the MIT Licence - https://raw.githubusercontent.com/ppy/osu/master/LICENCE
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using OpenTK.Graphics;
 using osu.Game.Beatmaps.Objects;
@@ -11,6 +12,7 @@ using osu.Game.Database;
 using osu.Game.GameModes.Play;
 using osu.Game.Users;
 using SQLite;
+using SQLiteNetExtensions.Attributes;
 
 namespace osu.Game.Beatmaps
 {
@@ -18,19 +20,31 @@ namespace osu.Game.Beatmaps
     {
         [PrimaryKey]
         public int BeatmapID { get; set; }
-        [NotNull, Indexed]
+
+        [ForeignKey(typeof(BeatmapSet))]
         public int BeatmapSetID { get; set; }
-        [Indexed]
+
+        [ForeignKey(typeof(BeatmapMetadata))]
         public int? BeatmapMetadataID { get; set; }
+
+        [ForeignKey(typeof(BaseDifficulty))]
         public int BaseDifficultyID { get; set; }
+
+        [ManyToOne]
+        public BeatmapSet BeatmapSet { get; set; }
+
         [Ignore]
         public List<HitObject> HitObjects { get; set; }
+
         [Ignore]
         public List<ControlPoint> ControlPoints { get; set; }
-        [Ignore]
+
+        [ManyToOne]
         public BeatmapMetadata Metadata { get; set; }
-        [Ignore]
+
+        [ManyToOne]
         public BaseDifficulty BaseDifficulty { get; set; }
+
         [Ignore]
         public List<Color4> ComboColors { get; set; }
         
@@ -52,7 +66,7 @@ namespace osu.Game.Beatmaps
         {
             get
             {
-                return StoredBookmarks.Split(',').Select(b => int.Parse(b)).ToArray();
+                return StoredBookmarks.Split(',').Select(int.Parse).ToArray();
             }
             set
             {
@@ -66,5 +80,20 @@ namespace osu.Game.Beatmaps
         
         // Metadata
         public string Version { get; set; }
+
+        private bool loaded;
+
+        public BeatmapDatabase BackingDatabase;
+
+        public void Load()
+        {
+            if (loaded) return;
+
+            Debug.Assert(BackingDatabase != null);
+
+            BackingDatabase.PopulateBeatmap(this);
+
+            loaded = true;
+        }
     }
 }

@@ -41,6 +41,10 @@
       <HintPath>$(SolutionDir)\packages\ppy.OpenTK.1.1.2225.3\lib\net20\OpenTK.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="SQLiteNetExtensions, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\SQLiteNetExtensions.2.0.0-alpha2\lib\portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1\SQLiteNetExtensions.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="SQLitePCLRaw.core">

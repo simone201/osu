@@ -9,6 +9,7 @@ using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.Formats;
 using osu.Game.Beatmaps.IO;
 using SQLite;
+using SQLiteNetExtensions.Extensions;
 
 namespace osu.Game.Database
 {
@@ -54,9 +55,11 @@ namespace osu.Game.Database
             if (db.Table<BeatmapSet>().Where(b => b.BeatmapSetID == metadata.BeatmapSetID).Any())
                 return; // TODO: Update this beatmap instead
             string[] mapNames = reader.ReadBeatmaps();
+
             var beatmapSet = new BeatmapSet
             {
                 BeatmapSetID = metadata.BeatmapSetID,
+                Metadata = metadata,
                 Path = path,
                 Hash = hash,
             };
@@ -68,15 +71,13 @@ namespace osu.Game.Database
                     Beatmap beatmap = new Beatmap();
                     decoder.Decode(stream, beatmap);
                     beatmapSet.Beatmaps.Add(beatmap);
-                    db.Insert(beatmap.BaseDifficulty);
+
                     beatmap.BaseDifficultyID = beatmap.BaseDifficulty.ID;
                 }
             }
-            db.Insert(metadata);
-            beatmapSet.Metadata = metadata;
-            beatmapSet.BeatmapMetadataID = metadata.ID;
-            db.Insert(beatmapSet);
-            db.InsertAll(beatmapSet.Beatmaps);
+
+            db.InsertWithChildren(beatmapSet);
+
             BeatmapSetAdded?.Invoke(beatmapSet);
         }
 
@@ -88,9 +89,9 @@ namespace osu.Game.Database
         /// <summary>
         /// Given a BeatmapSet pulled from the database, loads the rest of its data from disk.
         /// </summary>
-        public void PopulateBeatmap(BeatmapSet beatmapSet)
+        public void PopulateBeatmap(Beatmap beatmap)
         {
-            using (var reader = GetReader(beatmapSet))
+            using (var reader = GetReader(beatmap.BeatmapSet))
             {
                 string[] mapNames = reader.ReadBeatmaps();
                 foreach (var name in mapNames)
@@ -98,9 +99,7 @@ namespace osu.Game.Database
                     using (var stream = new StreamReader(reader.ReadFile(name)))
                     {
                         var decoder = BeatmapDecoder.GetDecoder(stream);
-                        Beatmap beatmap = new Beatmap();
                         decoder.Decode(stream, beatmap);
-                        beatmapSet.Beatmaps.Add(beatmap);
                     }
                 }
             }
@@ -109,21 +108,9 @@ namespace osu.Game.Database
         public BeatmapSet[] GetBeatmapSets()
         {
             var sets = db.Table<BeatmapSet>().ToArray();
-            foreach (var set in sets)
-            {
-                set.Metadata = db.Table<BeatmapMetadata>().SingleOrDefault(m => m.ID == set.BeatmapMetadataID);
-                set.Beatmaps = db.Table<Beatmap>().Where(b => b.BeatmapSetID == set.BeatmapSetID).ToList();
-                foreach (var map in set.Beatmaps)
-                {
-                    if (map.BeatmapMetadataID != null)
-                    {
-                        map.Metadata = db.Table<BeatmapMetadata>().SingleOrDefault(m => m.ID == map.BeatmapMetadataID.Value);
-                    }
-                    map.BaseDifficulty = db.Table<BaseDifficulty>().SingleOrDefault(d => d.ID == map.BaseDifficultyID);
-                }
-            }
-
             return sets;
         }
+
+        public BeatmapSet GetBeatmapSet(int beatmapSetId) => db.Get<BeatmapSet>(beatmapSetId);
     }
 }

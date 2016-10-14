@@ -3,6 +3,7 @@
 
 using osu.Game.GameModes.Play;
 using SQLite;
+using SQLiteNetExtensions.Attributes;
 
 namespace osu.Game.Beatmaps
 {
@@ -10,8 +11,10 @@ namespace osu.Game.Beatmaps
     {
         [PrimaryKey, AutoIncrement]
         public int ID { get; set; }
-        
+
+        [OneToOne(CascadeOperations = CascadeOperation.All)]
         public int BeatmapSetID { get; set; }
+
         public string Title { get; set; }
         public string TitleUnicode { get; set; }
         public string Artist { get; set; }

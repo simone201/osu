@@ -1,6 +1,7 @@
 //Copyright (c) 2007-2016 ppy Pty Ltd <contact@ppy.sh>.
 //Licensed under the MIT Licence - https://raw.githubusercontent.com/ppy/osu/master/LICENCE
 
+using System.Collections.Generic;
 using osu.Framework.GameModes;
 using osu.Framework.GameModes.Testing;
 using osu.Framework.Graphics;
@@ -14,6 +15,8 @@ using osu.Game.GameModes.Play;
 using osu.Game.Graphics.Containers;
 using OpenTK;
 using osu.Framework;
+using osu.Game.Beatmaps;
+using osu.Game.Beatmaps.Objects;
 using osu.Game.Overlays;
 
 namespace osu.Game.GameModes.Menu
@@ -30,6 +33,14 @@ namespace osu.Game.GameModes.Menu
             base.Load(game);
 
             OsuGame osu = (OsuGame)game;
+
+            //BeatmapSet set = osu.Beatmaps.GetBeatmapSets()[1];
+            
+
+            //Beatmap beatmap = set.Beatmaps[0];
+
+            //List<HitObject> objects = beatmap.HitObjects;
+
 
             Children = new Drawable[]
             {
