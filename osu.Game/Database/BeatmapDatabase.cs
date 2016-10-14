@@ -16,9 +16,8 @@ namespace osu.Game.Database
     {
         private static SQLiteConnection db;
         private BasicStorage storage;
-        private static BeatmapSet[] beatmapSetCache;
         public event Action<BeatmapSet> BeatmapSetAdded;
-        
+
         public BeatmapDatabase(BasicStorage storage)
         {
             this.storage = storage;
@@ -78,8 +77,6 @@ namespace osu.Game.Database
             beatmapSet.BeatmapMetadataID = metadata.ID;
             db.Insert(beatmapSet);
             db.InsertAll(beatmapSet.Beatmaps);
-            beatmapSetCache = (beatmapSetCache ?? new BeatmapSet[0])
-                .Concat(new[] { beatmapSet }).ToArray();
             BeatmapSetAdded?.Invoke(beatmapSet);
         }
 
@@ -111,27 +108,22 @@ namespace osu.Game.Database
 
         public BeatmapSet[] GetBeatmapSets()
         {
-            if (beatmapSetCache != null)
-                return beatmapSetCache;
-            beatmapSetCache = db.Table<BeatmapSet>().ToArray();
-            foreach (var bset in beatmapSetCache)
+            var sets = db.Table<BeatmapSet>().ToArray();
+            foreach (var set in sets)
             {
-                bset.Metadata = db.Table<BeatmapMetadata>()
-                    .Where(m => m.ID == bset.BeatmapMetadataID).SingleOrDefault();
-                bset.Beatmaps = db.Table<Beatmap>()
-                    .Where(b => b.BeatmapSetID == bset.BeatmapSetID).ToList();
-                foreach (var map in bset.Beatmaps)
+                set.Metadata = db.Table<BeatmapMetadata>().SingleOrDefault(m => m.ID == set.BeatmapMetadataID);
+                set.Beatmaps = db.Table<Beatmap>().Where(b => b.BeatmapSetID == set.BeatmapSetID).ToList();
+                foreach (var map in set.Beatmaps)
                 {
                     if (map.BeatmapMetadataID != null)
                     {
-                        map.Metadata = db.Table<BeatmapMetadata>()
-                            .Where(m => m.ID == map.BeatmapMetadataID.Value).SingleOrDefault();
+                        map.Metadata = db.Table<BeatmapMetadata>().SingleOrDefault(m => m.ID == map.BeatmapMetadataID.Value);
                     }
-                    map.BaseDifficulty = db.Table<BaseDifficulty>()
-                        .Where(d => d.ID == map.BaseDifficultyID).SingleOrDefault();
+                    map.BaseDifficulty = db.Table<BaseDifficulty>().SingleOrDefault(d => d.ID == map.BaseDifficultyID);
                 }
             }
-            return beatmapSetCache;
+
+            return sets;
         }
     }
 }
