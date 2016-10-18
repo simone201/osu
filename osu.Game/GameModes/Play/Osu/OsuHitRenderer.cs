@@ -18,8 +18,8 @@ namespace osu.Game.GameModes.Play.Osu
         {
             Circle c = h as Circle;
             if (c != null) return new DrawableCircle(c);
-            Slider s = h as Slider;
-            if (s != null) return new DrawableSlider(s);
+            //Slider s = h as Slider;
+            //if (s != null) return new DrawableSlider(s);
 
             return null;
         }
