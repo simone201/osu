@@ -44,7 +44,7 @@ namespace osu.Game.GameModes.Menu
                             OnChart = delegate { Push(new ChartListing()); },
                             OnDirect = delegate { Push(new OnlineListing()); },
                             OnEdit = delegate { Push(new EditSongSelect()); },
-                            OnSolo = delegate { Push(new PlaySongSelect()); },
+                            OnSolo = delegate { Push(new Player()); },
                             OnMulti = delegate { Push(new Lobby()); },
                             OnTest  = delegate { Push(new TestBrowser()); },
                             OnExit = delegate { Scheduler.AddDelayed(Exit, ButtonSystem.EXIT_DELAY); },
