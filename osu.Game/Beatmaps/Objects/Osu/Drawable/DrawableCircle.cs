@@ -27,6 +27,7 @@ namespace osu.Game.Beatmaps.Objects.Osu.Drawable
         private CirclePart circle;
         private RingPart ring;
         private FlashPart flash;
+        private ExplodePart explode;
         private NumberPart number;
         private GlowPart glow;
         private OsuBaseHit h;
@@ -38,6 +39,7 @@ namespace osu.Game.Beatmaps.Objects.Osu.Drawable
             Origin = Anchor.Centre;
             Alpha = 0;
             Position = h.Position;
+            Scale = new Vector2(0.4f);
 
             Children = new Framework.Graphics.Drawable[]
             {
@@ -53,6 +55,10 @@ namespace osu.Game.Beatmaps.Objects.Osu.Drawable
                 number = new NumberPart(),
                 ring = new RingPart(),
                 flash = new FlashPart(),
+                explode = new ExplodePart()
+                {
+                    Colour = h.Colour
+                },
                 approachCircle = new Sprite
                 {
                     Anchor = Anchor.Centre,
@@ -62,6 +68,8 @@ namespace osu.Game.Beatmaps.Objects.Osu.Drawable
             };
 
             Size = new Vector2(100);
+
+            State = HitState.Armed;
         }
 
         public override void Load(BaseGame game)
@@ -79,7 +87,7 @@ namespace osu.Game.Beatmaps.Objects.Osu.Drawable
 
             updateState();
 
-            Transforms.Add(new TransformScaleVector(Clock) { StartTime = h.StartTime + h.Duration, EndTime = h.StartTime + h.Duration + 400, StartValue = Scale, EndValue = Scale * 1.5f, Easing = EasingTypes.OutQuad });
+            Transforms.Add(new TransformScale(Clock) { StartTime = h.StartTime + h.Duration, EndTime = h.StartTime + h.Duration + 400, StartValue = Scale, EndValue = Scale * 1.5f, Easing = EasingTypes.OutQuad });
             Expire(true);
         }
 
@@ -107,9 +115,8 @@ namespace osu.Game.Beatmaps.Objects.Osu.Drawable
                     break;
                 case HitState.Armed:
                     const float flashIn = 30;
-                    const float fadeOut = 150;
+                    const float fadeOut = 800;
 
-                    Transforms.Add(new TransformAlpha(Clock) { StartTime = h.StartTime + flashIn, EndTime = h.StartTime + flashIn + fadeOut, StartValue = 1, EndValue = 0 });
                     //Transforms.Add(new TransformScale(Clock) { StartTime = h.StartTime, EndTime = h.StartTime + 400, StartValue = Scale, EndValue = Scale * 1.1f });
 
                     ring.Transforms.Add(new TransformAlpha(Clock) { StartTime = h.StartTime + flashIn, EndTime = h.StartTime + flashIn, StartValue = 0, EndValue = 0 });
@@ -117,6 +124,11 @@ namespace osu.Game.Beatmaps.Objects.Osu.Drawable
                     number.Transforms.Add(new TransformAlpha(Clock) { StartTime = h.StartTime + flashIn, EndTime = h.StartTime + flashIn, StartValue = 0, EndValue = 0 });
 
                     flash.Transforms.Add(new TransformAlpha(Clock) { StartTime = h.StartTime, EndTime = h.StartTime + flashIn, StartValue = 0, EndValue = 0.8f });
+                    flash.Transforms.Add(new TransformAlpha(Clock) { StartTime = h.StartTime + flashIn, EndTime = h.StartTime + flashIn + 100, StartValue = 0.8f, EndValue = 0 });
+
+                    explode.Transforms.Add(new TransformAlpha(Clock) { StartTime = h.StartTime, EndTime = h.StartTime + flashIn, StartValue = 0, EndValue = 1 });
+
+                    Transforms.Add(new TransformAlpha(Clock) { StartTime = h.StartTime + flashIn, EndTime = h.StartTime + flashIn + fadeOut, StartValue = 1, EndValue = 0 });
 
                     break;
             }
@@ -224,6 +236,60 @@ namespace osu.Game.Beatmaps.Objects.Osu.Drawable
                         RelativeSizeAxes = Axes.Both,
                     }
                 };
+            }
+        }
+
+        class ExplodePart : Container
+        {
+            public ExplodePart()
+            {
+                Size = new Vector2(144);
+
+                Anchor = Anchor.Centre;
+                Origin = Anchor.Centre;
+
+                Additive = true;
+                Alpha = 0;
+
+                Children = new Framework.Graphics.Drawable[]
+                {
+                    new Triangles
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                    },
+                };
+            }
+
+            class Triangles : Container
+            {
+                private Texture tex;
+
+                public override void Load(BaseGame game)
+                {
+                    base.Load(game);
+
+                    tex = game.Textures.Get(@"Play/osu/triangle@2x");
+
+                    for (int i = 0; i < 10; i++)
+                    {
+                        Add(new Sprite
+                        {
+                            Texture = tex,
+                            Origin = Anchor.Centre,
+                            Position = new Vector2(RNG.NextSingle() * Size.X, RNG.NextSingle() * Size.Y),
+                            Scale = new Vector2(RNG.NextSingle() * 0.4f + 0.2f),
+                            Alpha = RNG.NextSingle() * 0.3f,
+                        });
+                    }
+                }
+
+                protected override void Update()
+                {
+                    base.Update();
+
+                    foreach (Framework.Graphics.Drawable d in Children)
+                        d.Position -= new Vector2(0, (float)(d.Scale.X * (Clock.ElapsedFrameTime / 20)));
+                }
             }
         }
 
