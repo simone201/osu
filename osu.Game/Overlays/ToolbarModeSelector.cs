@@ -6,16 +6,16 @@ using System.Linq;
 using osu.Framework.Cached;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Framework.Graphics.Drawables;
 using osu.Framework.Graphics.Transformations;
 using osu.Game.GameModes.Play;
 using OpenTK;
 using OpenTK.Graphics;
 using osu.Framework;
+using osu.Framework.Graphics.Sprites;
 
 namespace osu.Game.Overlays
 {
-    class ToolbarModeSelector : Container
+    class ToolbarModeSelector : AutoSizeContainer
     {
         const float padding = 10;
 
@@ -71,9 +71,6 @@ namespace osu.Game.Overlays
                     }
                 });
             }
-
-            RelativeSizeAxes = Axes.Y;
-            Size = new Vector2(modeButtons.Children.Count() * ToolbarButton.WIDTH + padding * 2, 1);
         }
 
         public void SetGameMode(PlayMode mode)

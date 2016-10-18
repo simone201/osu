@@ -8,6 +8,7 @@ using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Transformations;
 using osu.Framework.Input;
 using osu.Framework;
+using OpenTK;
 
 namespace osu.Game.GameModes.Menu
 {
@@ -17,6 +18,7 @@ namespace osu.Game.GameModes.Menu
     public partial class OsuLogo : AutoSizeContainer
     {
         private Sprite logo;
+        private CircularContainer logoContainer;
         private Container logoBounceContainer;
         private MenuVisualisation vis;
 
@@ -27,6 +29,11 @@ namespace osu.Game.GameModes.Menu
         private Sprite ripple;
 
         private Container rippleContainer;
+
+        public override bool Contains(Vector2 screenSpacePos)
+        {
+            return logoContainer.Contains(screenSpacePos);
+        }
 
         public bool Ripple
         {
@@ -50,10 +57,17 @@ namespace osu.Game.GameModes.Menu
                 {
                     Children = new Drawable[]
                     {
-                        logo = new Sprite()
+                        logoContainer = new CircularContainer
                         {
                             Anchor = Anchor.Centre,
-                            Origin = Anchor.Centre
+                            Children = new[]
+                            {
+                                logo = new Sprite
+                                {
+                                    Anchor = Anchor.Centre,
+                                    Origin = Anchor.Centre,
+                                },
+                            },
                         },
                         rippleContainer = new Container
                         {

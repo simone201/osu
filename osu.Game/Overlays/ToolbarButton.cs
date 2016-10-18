@@ -4,7 +4,6 @@
 using System;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Framework.Graphics.Drawables;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Input;
 using osu.Game.Graphics;
@@ -15,10 +14,8 @@ using osu.Framework.Graphics.Primitives;
 
 namespace osu.Game.Overlays
 {
-    public class ToolbarButton : Container
+    public class ToolbarButton : AutoSizeContainer
     {
-        public const float WIDTH = 60;
-
         public FontAwesome Icon
         {
             get { return DrawableIcon.Icon; }
@@ -62,6 +59,15 @@ namespace osu.Game.Overlays
 
         public ToolbarButton()
         {
+            RelativeSizeAxes = Axes.Y;
+
+            DrawableText = new SpriteText
+            {
+                //Margin = new MarginPadding { Left = 5 },
+                Anchor = Anchor.CentreLeft,
+                Origin = Anchor.CentreLeft,
+            };
+
             Children = new Drawable[]
             {
                 HoverBackground = new Box
@@ -74,23 +80,16 @@ namespace osu.Game.Overlays
                 new FlowContainer
                 {
                     Direction = FlowDirection.HorizontalOnly,
-                    Anchor = Anchor.TopCentre,
-                    Origin = Anchor.TopCentre,
-                    Padding = new MarginPadding { Left = 5, Right = 5 },
+                    Padding = new MarginPadding { Left = 10, Right = 10 },
                     RelativeSizeAxes = Axes.Y,
                     Children = new Drawable[]
                     {
                         DrawableIcon = new TextAwesome
                         {
-                            Anchor = Anchor.CentreLeft,
-                            Origin = Anchor.CentreLeft,
+                            Anchor = Anchor.Centre,
+                            Origin = Anchor.Centre,
                         },
-                        DrawableText = new SpriteText
-                        {
-                            Margin = new MarginPadding { Left = 5 },
-                            Anchor = Anchor.CentreLeft,
-                            Origin = Anchor.CentreLeft,
-                        },
+
                     },
                 },
                 tooltipContainer = new FlowContainer
@@ -98,6 +97,7 @@ namespace osu.Game.Overlays
                     Direction = FlowDirection.VerticalOnly,
                     Anchor = Anchor.BottomLeft,
                     Position = new Vector2(5, -5),
+                    RelativeSizeAxes = Axes.Both,
                     Alpha = 0,
                     Children = new[]
                     {
@@ -112,17 +112,6 @@ namespace osu.Game.Overlays
                     }
                 }
             };
-
-            RelativeSizeAxes = Axes.Y;
-            Size = new Vector2(WIDTH, 1);
-        }
-
-        protected override void Update()
-        {
-            base.Update();
-
-            //todo: find a way to avoid using this (autosize needs to be able to ignore certain drawables.. in this case the tooltip)
-            Size = new Vector2(WIDTH + (DrawableText.IsVisible ? DrawableText.Size.X : 0), 1);
         }
 
         protected override bool OnClick(InputState state)
