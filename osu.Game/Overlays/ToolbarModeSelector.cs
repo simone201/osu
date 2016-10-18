@@ -15,7 +15,7 @@ using osu.Framework.Graphics.Sprites;
 
 namespace osu.Game.Overlays
 {
-    class ToolbarModeSelector : Container
+    class ToolbarModeSelector : AutoSizeContainer
     {
         const float padding = 10;
 
@@ -71,9 +71,6 @@ namespace osu.Game.Overlays
                     }
                 });
             }
-
-            RelativeSizeAxes = Axes.Y;
-            Size = new Vector2(modeButtons.Children.Count() * ToolbarButton.WIDTH + padding * 2, 1);
         }
 
         public void SetGameMode(PlayMode mode)
