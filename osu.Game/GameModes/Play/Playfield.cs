@@ -11,8 +11,6 @@ namespace osu.Game.GameModes.Play
         public override void Load(BaseGame game)
         {
             base.Load(game);
-
-            Masking = true;
         }
     }
 }
