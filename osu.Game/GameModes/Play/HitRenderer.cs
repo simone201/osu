@@ -46,14 +46,19 @@ namespace osu.Game.GameModes.Play
             loadObjects();
         }
 
+        float depth = 0;
         private void loadObjects()
         {
             if (objects == null) return;
             foreach (T h in objects)
             {
                 var rep = GetVisualRepresentation(h);
+
                 if (rep != null)
+                {
+                    rep.Depth = depth--;
                     playfield.Add(rep);
+                }
             }
         }
 
