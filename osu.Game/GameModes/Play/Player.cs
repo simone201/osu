@@ -25,6 +25,7 @@ using osu.Framework;
 using osu.Framework.Audio.Track;
 using osu.Game.Beatmaps.Formats;
 using osu.Game.Beatmaps.IO;
+using OpenTK.Graphics;
 
 namespace osu.Game.GameModes.Play
 {
@@ -32,9 +33,9 @@ namespace osu.Game.GameModes.Play
     {
         protected override BackgroundMode CreateBackground() => new BackgroundModeCustom(@"Backgrounds/bg4");
 
-        protected override IFrameBasedClock Clock => clock;
+        private FramedClock ourClock;
 
-        private FramedClock clock = new FramedClock();
+        protected override IFrameBasedClock Clock => ourClock;
 
         public override void Load(BaseGame game)
         {
@@ -46,18 +47,20 @@ namespace osu.Game.GameModes.Play
             //beatmap is missing storage access method (to get osz directly) and ability to access file streams
 
             //...so i get it myself
-            var reader = ArchiveReader.GetReader(game.Host.Storage, @"150945 Knife Party - Centipede.osz");
+            var reader = ArchiveReader.GetReader( game.Host.Storage, @"150945 Knife Party - Centipede.osz");
 
             //i have to read the filenames manually because they aren't in the databse either
             string[] maps = reader.ReadBeatmaps();
 
-
-            AudioTrackBass track = new AudioTrackBass(reader.ReadFile(@"150945 Knife Party - Centipede/02-knife_party-centipede.mp3"));
+            AudioTrackBass track = new AudioTrackBass(reader.ReadFile(@"02-knife_party-centipede.mp3"));
             game.Audio.Track.ActiveItems.ForEach(t => t.Stop());
             game.Audio.Track.ActiveItems.Clear();
             game.Audio.Track.AddItem(track);
 
+            ourClock = new FramedClock(new OffsetClock(track) { Offset = 150 });
+
             track.Start();
+            track.Seek(50000);
 
             using (Stream s = reader.ReadFile(maps[0]))
             using (StreamReader sr = new StreamReader(s))
@@ -74,10 +77,31 @@ namespace osu.Game.GameModes.Play
 
                 using (Stream s2 = reader.ReadFile(maps[0]))
                 using (StreamReader sr2 = new StreamReader(s2))
-                    beatmap = decoder.Decode(sr2);
+                    decoder.Decode(sr2, beatmap);
             }
 
             OsuGame osu = game as OsuGame;
+
+            int index = 0;
+            Color4[] colours = new Color4[]
+            {
+                new Color4(17, 136, 170, 255),
+                new Color4(102,136,0, 255),
+                new Color4(204,102,0, 255),
+                new Color4(121,9,13, 255),
+
+            };
+
+            foreach (HitObject h in beatmap.HitObjects)
+            {
+                var c = (h as Circle);
+
+                if (c == null) continue;
+
+                if (c.NewCombo) index = (index + 1) % colours.Length;
+                c.Colour = colours[index];
+
+            }
 
             switch (osu.PlayMode.Value)
             {
@@ -86,7 +110,8 @@ namespace osu.Game.GameModes.Play
                     {
                         Objects = beatmap.HitObjects,
                         Anchor = Anchor.Centre,
-                        Origin = Anchor.Centre
+                        Origin = Anchor.Centre,
+                        Scale = new Vector2(2),
                     });
                     break;
                 case PlayMode.Taiko:
@@ -135,7 +160,7 @@ namespace osu.Game.GameModes.Play
         protected override void Update()
         {
             base.Update();
-            clock.ProcessFrame();
+            ourClock.ProcessFrame();
         }
     }
 }
