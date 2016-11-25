@@ -25,7 +25,7 @@ namespace osu.Game.Beatmaps.Drawables
 
         protected override Container<Drawable> Content => nestedContainer;
 
-        protected Panel()
+        internal Panel()
         {
             Height = MAX_HEIGHT;
             RelativeSizeAxes = Axes.X;

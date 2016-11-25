@@ -19,60 +19,86 @@ namespace osu.Game.Screens.Select
 {
     class CarouselContainer : ScrollContainer
     {
-        private Container<Panel> scrollableContent;
+        private CarouselContent content;
         private List<BeatmapGroup> groups = new List<BeatmapGroup>();
 
         public BeatmapGroup SelectedGroup { get; private set; }
         public BeatmapPanel SelectedPanel { get; private set; }
 
         private List<float> yPositions = new List<float>();
-        private CarouselLifetimeList<Panel> Lifetime;
 
         public CarouselContainer()
         {
             DistanceDecayJump = 0.01;
 
-            Add(scrollableContent = new Container<Panel>(Lifetime = new CarouselLifetimeList<Panel>(DepthComparer))
+            Add(content = new CarouselContent()
             {
                 RelativeSizeAxes = Axes.X,
             });
         }
 
-        internal class CarouselLifetimeList<T> : LifetimeList<Panel>
+        class CarouselContent : Container<Panel>
         {
-            public CarouselLifetimeList(IComparer<Panel> comparer)
-                : base(comparer)
+            public CarouselContent() : base(new CarouselLifetimeList<Panel>())
+            { }
+
+            public float MinimumY { set { ((CarouselLifetimeList<Panel>)children).MinimumY = value; } }
+            public float MaximumY { set { ((CarouselLifetimeList<Panel>)children).MaximumY = value; } }
+
+            private class CarouselLifetimeList<T> : LifetimeList<Panel>
             {
-            }
-
-            public int StartIndex;
-            public int EndIndex;
-
-            public override bool Update(FrameTimeInfo time)
-            {
-                bool anyAliveChanged = false;
-
-                //check existing items to make sure they haven't died.
-                foreach (var item in AliveItems.ToArray())
+                class PositionComparer : DepthComparer
                 {
-                    item.UpdateTime(time);
-                    if (!item.IsAlive)
+                    public override int Compare(Drawable x, Drawable y)
                     {
-                        //todo: make this more efficient
-                        int i = IndexOf(item);
-                        anyAliveChanged |= CheckItem(item, ref i);
+                        int i = x.Position.Y.CompareTo(y.Position.Y);
+                        if (i != 0)
+                            return i;
+                        return base.Compare(x, y);
                     }
                 }
 
-                //handle custom range
-                for (int i = StartIndex; i < EndIndex; i++)
+                public CarouselLifetimeList()
+                    : base(new PositionComparer())
                 {
-                    var item = this[i];
-                    item.UpdateTime(time);
-                    anyAliveChanged |= CheckItem(item, ref i);
                 }
 
-                return anyAliveChanged;
+                public float MinimumY;
+                public float MaximumY;
+
+                public override bool Update(FrameTimeInfo time)
+                {
+                    bool anyAliveChanged = false;
+
+                    //check existing items to make sure they haven't died.
+                    foreach (var item in AliveItems.ToArray())
+                    {
+                        item.UpdateTime(time);
+                        if (item.Position.Y < MinimumY || item.Position.Y > MaximumY)
+                        {
+                            //todo: make this more efficient
+                            int i = IndexOf(item);
+                            item.OnScreen = false;
+                            anyAliveChanged |= CheckItem(item, ref i);
+                        }
+                    }
+
+                    int firstIndex = BinarySearch(new Panel { Position = new Vector2(0, MinimumY) }, Comparer);
+                    if (firstIndex < 0) firstIndex = ~firstIndex;
+                    int lastIndex = BinarySearch(new Panel { Position = new Vector2(0, MaximumY) }, Comparer);
+                    if (lastIndex < 0) lastIndex = ~lastIndex;
+
+                    //handle custom range
+                    for (int i = firstIndex; i < lastIndex; i++)
+                    {
+                        var item = this[i];
+                        item.OnScreen = true;
+                        item.UpdateTime(time);
+                        anyAliveChanged |= CheckItem(item, ref i);
+                    }
+
+                    return anyAliveChanged;
+                }
             }
         }
 
@@ -81,13 +107,13 @@ namespace osu.Game.Screens.Select
             group.State = BeatmapGroupState.Collapsed;
             groups.Add(group);
 
-            group.Header.Depth = scrollableContent.Children.Count();
-            scrollableContent.Add(group.Header);
+            group.Header.Depth = content.Children.Count();
+            content.Add(group.Header);
 
             foreach (BeatmapPanel panel in group.BeatmapPanels)
             {
-                panel.Depth = scrollableContent.Children.Count();
-                scrollableContent.Add(panel);
+                panel.Depth = content.Children.Count();
+                content.Add(panel);
             }
 
             computeYPositions();
@@ -149,7 +175,7 @@ namespace osu.Game.Screens.Select
             }
 
             currentY += DrawHeight / 2;
-            scrollableContent.Height = currentY;
+            content.Height = currentY;
 
             return selectedY;
         }
@@ -196,28 +222,13 @@ namespace osu.Game.Screens.Select
 
             float drawHeight = DrawHeight;
 
-            Lifetime.AliveItems.ForEach(delegate (Panel p)
-            {
-                float panelPosY = p.Position.Y;
-                p.OnScreen = panelPosY >= Current - p.DrawHeight && panelPosY <= Current + drawHeight;
-            });
-
-            int firstIndex = yPositions.BinarySearch(Current - Panel.MAX_HEIGHT);
-            if (firstIndex < 0) firstIndex = ~firstIndex;
-            int lastIndex = yPositions.BinarySearch(Current + drawHeight);
-            if (lastIndex < 0) lastIndex = ~lastIndex;
-
-            Lifetime.StartIndex = firstIndex;
-            Lifetime.EndIndex = lastIndex;
+            content.MinimumY = Current - Panel.MAX_HEIGHT;
+            content.MaximumY = Current + drawHeight;
 
             float halfHeight = drawHeight / 2;
 
-            for (int i = firstIndex; i < lastIndex; ++i)
+            foreach (var panel in content.AliveChildren)
             {
-                var panel = Lifetime[i];
-
-                panel.OnScreen = true;
-
                 float panelDrawY = panel.Position.Y - Current + panel.DrawHeight / 2;
                 float dist = Math.Abs(1f - panelDrawY / halfHeight);
 
