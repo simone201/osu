@@ -24,14 +24,22 @@ namespace osu.Game.Graphics.UserInterface
 
         private Color4 colorBright = new Color4(238, 51, 153, 255);
         private Color4 colorDark = new Color4(195, 40, 140, 255);
+
         private const double transform_time = 300.0;
         private const int pulse_length = 250;
+
+        const float collapsed_width = 120;
+        const float expanded_width = 140;
+
+        const float height = 50;
+
+        const float shear_amount = 0.1f;
 
         public BackButton()
         {
             RelativeSizeAxes = Axes.None;
-            Width = 120;
-            Height = 50; // same as bottomToolHeight in PlaySongSelect
+            Width = collapsed_width;
+            Height = height;
 
             Children = new Drawable[]
             {
@@ -45,7 +53,7 @@ namespace osu.Game.Graphics.UserInterface
                         {
                             RelativeSizeAxes = Axes.Both,
                             Colour = colorDark,
-                            Shear = new Vector2(0.1f, 0),
+                            Shear = new Vector2(shear_amount, 0),
                         },
                         icon = new TextAwesome
                         {
@@ -70,7 +78,7 @@ namespace osu.Game.Graphics.UserInterface
                             Origin = Anchor.TopLeft,
                             Anchor = Anchor.TopLeft,
                             RelativeSizeAxes = Axes.Both,
-                            Shear = new Vector2(0.1f, 0), 
+                            Shear = new Vector2(shear_amount, 0), 
                             EdgeSmoothness = new Vector2(1.5f, 0), 
                         },
                         new SpriteText
@@ -90,7 +98,7 @@ namespace osu.Game.Graphics.UserInterface
             rightContainer.MoveTo(Position + ExtendLength, transform_time, EasingTypes.OutElastic);
             leftContainer.ResizeTo(new Vector2(ExtendLength.X, 1.0f), transform_time, EasingTypes.OutElastic);
 
-            Width = 140; // right container + ExtendLength
+            Width = expanded_width; // right container + ExtendLength
 
             int duration = 0; //(int)(Game.Audio.BeatLength / 2);
             if (duration == 0) duration = pulse_length;
@@ -120,7 +128,7 @@ namespace osu.Game.Graphics.UserInterface
             rightContainer.MoveTo(Position + InitialExtendLength, transform_time, EasingTypes.OutElastic);
             leftContainer.ResizeTo(new Vector2(InitialExtendLength.X, 1.0f), transform_time, EasingTypes.OutElastic);
 
-            Width = 120; // right container + InitialExtendLength
+            Width = collapsed_width; // right container + InitialExtendLength
 
             int duration = 0; //(int)(Game.Audio.BeatLength / 2);
             if (duration == 0) duration = pulse_length * 2;
